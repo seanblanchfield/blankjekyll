@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Define the Docker image to use for Jekyll (in this case, the image you specified: jentic-github-pages)
+IMAGE="jentic-github-pages"
+
+# Define the working directory inside the container where the Jekyll site will be created
+WORKDIR="/site"
+
+# Get the current directory on the host
+HOST_DIR=$(pwd)
+
+# Get the user ID and group ID of the current user to avoid permission issues
+USER_ID=$(id -u)
+GROUP_ID=$(id -g)
+
+# Check if the user passed "build" as the argument
+if [[ "$1" == "build" ]]; then
+    # Build the Docker image
+    echo "Running command: docker build -t $IMAGE ."
+    docker build -t $IMAGE .
+    exit 0
+fi
+
+if [[ "$1" == "serve" ]]; then
+    EXTRA_ARGS="--host 0.0.0.0"
+fi
+
+# Pass all arguments given to the script to the `jekyll` command in Docker
+cmd="docker run --rm -v $HOST_DIR:$WORKDIR -p 4000:4000 -w /site/source --user $(id -u):$(id -g) $IMAGE jekyll $@ $EXTRA_ARGS"
+
+printf "Running:\n$cmd\n"
+$cmd
